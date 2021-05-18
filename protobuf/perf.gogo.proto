@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package gogo;
+
+option go_package = "github.com/qieqieplus/perf/protobuf/gogo";
+
+message Entry {
+    string name = 1;
+    map<string, bytes> extended = 2;
+    bytes link = 3;
+    int32 link_counter = 4;
+}
