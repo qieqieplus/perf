@@ -28,15 +28,8 @@ func Pwrite(fp *os.File, p []byte, offset int64) (n int, err error) {
 }
 
 func Pwritev(fp *os.File, iovs [][]byte, offset int64) (n int, err error) {
-	var vl, vs int
-	if vl = len(iovs); vl == 0 {
-		return
-	} else if vs = len(iovs[0]); vs == 0 {
-		return
-	}
-
-	var m int
 	for len(iovs) > 0 {
+		i, j, m := 0, 0, 0
 		m, err = unix.Pwritev(int(fp.Fd()), iovs, offset)
 		if err != nil {
 			return
@@ -45,10 +38,13 @@ func Pwritev(fp *os.File, iovs [][]byte, offset int64) (n int, err error) {
 			err = io.ErrUnexpectedEOF
 			return
 		}
-		m -= m % vs
-		iovs = iovs[m/vs:]
-		n += m
-		offset += int64(m)
+		for i < len(iovs) && j + len(iovs[j]) <= m {
+			j += len(iovs[j])
+			i++
+		}
+		iovs = iovs[i:]
+		n += j
+		offset += int64(j)
 	}
 	return
 }

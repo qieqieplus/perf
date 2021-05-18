@@ -21,6 +21,8 @@ var (
 )
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
+
 	var err error
 	if f1, err = os.Create("test1"); err != nil {
 		panic(err)
@@ -28,8 +30,6 @@ func init() {
 	if f2, err = os.Create("test2"); err != nil {
 		panic(err)
 	}
-
-	rand.Seed(time.Now().UnixNano())
 
 	buffer = make([][]byte, iter)
 	for i := range buffer {
