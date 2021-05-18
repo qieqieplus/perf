@@ -22,8 +22,8 @@ func (s *Store) Open(dir string) (err error) {
 
 	s.db, err = leveldb.OpenFile(dir,
 		&opt.Options{
-			BlockCacheCapacity: 512 * 1024 * 1024,
-			WriteBuffer:        512 * 1024 * 1024,
+			BlockCacheCapacity: 2 * 1024 * 1024,
+			WriteBuffer:        2 * 1024 * 1024,
 		})
 	return
 }

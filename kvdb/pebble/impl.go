@@ -15,10 +15,12 @@ func NewPebble() Engine {
 }
 
 func (s *Store) Open(dir string) (err error) {
-	s.wo = &pebble.WriteOptions{}
-	s.db, err = pebble.Open(dir, &pebble.Options{
-		MemTableSize: 512 * 1024,
-	})
+	opt := (&pebble.Options{}).EnsureDefaults()
+	opt.BytesPerSync = 1 * 1024 * 1024
+	opt.MemTableSize = 2 * 1024 * 1024
+	opt.Cache = pebble.NewCache(2 * 1024 * 1024)
+	s.wo = &pebble.WriteOptions{Sync: false}
+	s.db, err = pebble.Open(dir, opt)
 	return
 }
 
