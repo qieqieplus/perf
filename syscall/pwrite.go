@@ -38,8 +38,8 @@ func Pwritev(fp *os.File, iovs [][]byte, offset int64) (n int, err error) {
 			err = io.ErrUnexpectedEOF
 			return
 		}
-		for i < len(iovs) && j + len(iovs[j]) <= m {
-			j += len(iovs[j])
+		for i < len(iovs) && j + len(iovs[i]) <= m {
+			j += len(iovs[i])
 			i++
 		}
 		iovs = iovs[i:]
