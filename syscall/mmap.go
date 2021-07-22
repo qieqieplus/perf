@@ -10,29 +10,32 @@ import (
 const (
 	Filename          = "MANIFEST"
 	Magic      uint32 = 0xCAC01000
-	MetricSize        = 48
+	MetricNum         = 5
+	MetricSize        = 8 + 8*MetricNum
 )
 
 type Metrics struct {
-	version       uint32
-	padding       [4]byte
-	a, b, c, d, e *int64
+	version uint32
+	padding [4]byte
+	data    [MetricNum]*int64
 }
 
-func cast(buf []byte) *Metrics {
-	buf = buf[:MetricSize]
+func cast(mem []byte) *Metrics {
+	buf := mem[:MetricSize]
 	ver := binary.BigEndian.Uint32(buf[:4])
 	if ver != Magic {
 		return nil
 	}
+
+	var data [MetricNum]*int64
+	for i := 0; i < MetricNum; i++ {
+		data[i] = (*int64)(unsafe.Pointer(&buf[8*(i+1)]))
+	}
+
 	return &Metrics{
 		version: ver,
 		padding: [4]byte{},
-		a:       (*int64)(unsafe.Pointer(&buf[8*1])),
-		b:       (*int64)(unsafe.Pointer(&buf[8*2])),
-		c:       (*int64)(unsafe.Pointer(&buf[8*3])),
-		d:       (*int64)(unsafe.Pointer(&buf[8*4])),
-		e:       (*int64)(unsafe.Pointer(&buf[8*5])),
+		data:    data,
 	}
 }
 
@@ -42,7 +45,10 @@ func initFile() (*os.File, error) {
 		return nil, err
 	}
 	stat, _ := f.Stat()
-	if stat.Size() > 0 {
+	if sz := stat.Size(); sz > 0 {
+		if sz != MetricSize {
+			panic("init: invalid file")
+		}
 		return f, nil
 	}
 	buf := make([]byte, MetricSize)
@@ -56,19 +62,16 @@ func initFile() (*os.File, error) {
 	return f, nil
 }
 
-func mapMetrics() *Metrics {
-	fd, err := initFile()
+func mapMetrics(fd uintptr) []byte {
+	mem, err := syscall.Mmap(int(fd), 0, MetricSize, syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
 	if err != nil {
 		panic(err)
 	}
-	mem, err := syscall.Mmap(int(fd.Fd()), 0, MetricSize, syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
-	//fmt.Println(mem)
-	if err != nil {
+	return mem
+}
+
+func unmapMetrics(mem []byte) {
+	if err := syscall.Munmap(mem); err != nil {
 		panic(err)
 	}
-	data := cast(mem)
-	if data == nil {
-		panic("mmap: invalid file")
-	}
-	return data
 }

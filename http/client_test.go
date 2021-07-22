@@ -64,10 +64,12 @@ func BenchmarkNetHttp(b *testing.B) {
 			req, err := http.NewRequest(http.MethodPost, "http://127.0.0.1:56789/echo", buf)
 			if err != nil {
 				b.Fail()
+				return
 			}
 			resp, err := httpClient.Do(req)
 			if err != nil {
 				b.Fail()
+				return
 			}
 			resp.Body.Close()
 		}()
