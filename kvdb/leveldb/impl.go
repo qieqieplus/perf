@@ -1,9 +1,11 @@
 package leveldb
 
 import (
-	. "github.com/qieqieplus/perf/kvdb/engine"
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
+
+	. "github.com/qieqieplus/perf/kvdb/engine"
 )
 
 type Store struct {
@@ -12,20 +14,27 @@ type Store struct {
 	wo *opt.WriteOptions
 }
 
-func NewLevelDB() Engine {
+func New() Engine {
 	return &Store{}
 }
 
-func (s *Store) Open(dir string) (err error) {
+func (s *Store) Open(dir string, options Options) (err error) {
 	s.ro = &opt.ReadOptions{}
 	s.wo = &opt.WriteOptions{}
 
-	s.db, err = leveldb.OpenFile(dir,
-		&opt.Options{
-			BlockCacheCapacity: 2 * 1024 * 1024,
-			WriteBuffer:        2 * 1024 * 1024,
-		})
+	o := &opt.Options{
+		BlockCacheCapacity: options.BlockCacheSize,
+		WriteBuffer:        options.Memtable,
+	}
+	if options.BloomFilter.BitsPerKey > 0 {
+		o.Filter = filter.NewBloomFilter(options.BloomFilter.BitsPerKey)
+	}
+	s.db, err = leveldb.OpenFile(dir, o)
 	return
+}
+
+func (s *Store) Close() {
+	s.db.Close()
 }
 
 func (s *Store) Get(key []byte) []byte {

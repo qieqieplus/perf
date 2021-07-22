@@ -1,4 +1,3 @@
-
 package rocksdb
 
 import (
@@ -6,27 +5,49 @@ import (
 	. "github.com/qieqieplus/perf/kvdb/engine"
 )
 
-
 type Store struct {
-	db *gorocksdb.DB
-	o *gorocksdb.Options
-	wo *gorocksdb.WriteOptions
-	ro *gorocksdb.ReadOptions
+	db    *gorocksdb.DB
+	cache *gorocksdb.Cache
+
+	o   *gorocksdb.Options
+	bto *gorocksdb.BlockBasedTableOptions
+	wo  *gorocksdb.WriteOptions
+	ro  *gorocksdb.ReadOptions
 }
 
-func NewRocksDB() Engine {
+func New() Engine {
 	return &Store{
-		o: gorocksdb.NewDefaultOptions(),
-		wo: gorocksdb.NewDefaultWriteOptions(),
-		ro: gorocksdb.NewDefaultReadOptions(),
+		o:   gorocksdb.NewDefaultOptions(),
+		bto: gorocksdb.NewDefaultBlockBasedTableOptions(),
+		wo:  gorocksdb.NewDefaultWriteOptions(),
+		ro:  gorocksdb.NewDefaultReadOptions(),
 	}
 }
 
-func (s *Store) Open(dir string) (err error) {
+func (s *Store) Open(dir string, options Options) (err error) {
+	s.cache = gorocksdb.NewLRUCache(uint64(options.BlockCacheSize))
+
+	s.bto.SetBlockCache(s.cache)
+	if options.BloomFilter.BitsPerKey > 0 {
+		s.bto.SetFilterPolicy(gorocksdb.NewBloomFilterFull(options.BloomFilter.BitsPerKey))
+	}
+
+	s.o.SetWriteBufferSize(options.Memtable)
+	s.o.SetBlockBasedTableFactory(s.bto)
 	s.o.SetCreateIfMissing(true)
-	s.o.SetWriteBufferSize(2 * 1024 * 1024)
+
 	s.db, err = gorocksdb.OpenDb(s.o, dir)
 	return
+}
+
+func (s *Store) Close() {
+	s.o.Destroy()
+	s.bto.Destroy()
+	s.wo.Destroy()
+	s.ro.Destroy()
+
+	s.cache.Destroy()
+	s.db.Close()
 }
 
 func (s *Store) Get(key []byte) []byte {

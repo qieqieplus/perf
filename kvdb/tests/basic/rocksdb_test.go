@@ -1,6 +1,6 @@
 // +build rocksdb
 
-package kvdb
+package basic
 
 import (
 	"bytes"
@@ -12,8 +12,8 @@ import (
 
 func init() {
 	os.RemoveAll("/tmp/rocksdb")
-	rdb = rocksdb.NewRocksDB()
-	rdb.Open("/tmp/rocksdb")
+	rdb = rocksdb.New()
+	rdb.Open("/tmp/rocksdb", opts)
 }
 
 func BenchmarkRocksDBPut(b *testing.B) {

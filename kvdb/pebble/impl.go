@@ -2,6 +2,7 @@ package pebble
 
 import (
 	"github.com/cockroachdb/pebble"
+	"github.com/cockroachdb/pebble/bloom"
 	. "github.com/qieqieplus/perf/kvdb/engine"
 )
 
@@ -10,18 +11,33 @@ type Store struct {
 	wo *pebble.WriteOptions
 }
 
-func NewPebble() Engine {
+func New() Engine {
 	return &Store{}
 }
 
-func (s *Store) Open(dir string) (err error) {
-	opt := (&pebble.Options{}).EnsureDefaults()
-	opt.BytesPerSync = 1 * 1024 * 1024
-	opt.MemTableSize = 2 * 1024 * 1024
-	opt.Cache = pebble.NewCache(2 * 1024 * 1024)
+func (s *Store) Open(dir string, options Options) (err error) {
+	cache := pebble.NewCache(int64(options.BlockCacheSize))
+	defer cache.Unref()
+
+	o := &pebble.Options{
+		MemTableSize: options.Memtable,
+		Cache:        cache,
+		BytesPerSync: 2 * options.Memtable,
+	}
+
+	if options.BloomFilter.BitsPerKey > 0 {
+		o.Levels = []pebble.LevelOptions{{
+			FilterPolicy: bloom.FilterPolicy(8),
+		}}
+	}
+
 	s.wo = &pebble.WriteOptions{Sync: false}
-	s.db, err = pebble.Open(dir, opt)
+	s.db, err = pebble.Open(dir, o)
 	return
+}
+
+func (s *Store) Close() {
+	s.db.Close()
 }
 
 func (s *Store) Get(key []byte) []byte {
