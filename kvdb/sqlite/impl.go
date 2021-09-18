@@ -3,7 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
-	_ "modernc.org/sqlite"
+	_ "github.com/mattn/go-sqlite3"
 
 	. "github.com/qieqieplus/perf/kvdb/engine"
 )
@@ -25,7 +25,7 @@ func New() Engine {
 }
 
 func (s *Store) Open(dir string, options Options) (err error) {
-	s.db, err = sql.Open("sqlite", dir)
+	s.db, err = sql.Open("sqlite3", dir)
 	if err != nil {
 		s.db.Close()
 		return
