@@ -13,7 +13,7 @@ type pair struct {
 }
 
 var (
-	dict = make([]*pair, 1<<14)
+	dict = make([]*pair, 1<<12)
 	opts = engine.Options{
 		Memtable:       1 * 1024 * 1024,
 		BlockCacheSize: 8 * 1024 * 1024,
@@ -21,7 +21,7 @@ var (
 			BitsPerKey int
 		}{8},
 	}
-	ldb, pbl, rdb engine.Engine
+	ldb, pbl, rdb, lite engine.Engine
 )
 
 func init() {

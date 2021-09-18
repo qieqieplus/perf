@@ -11,6 +11,8 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/qieqieplus/gorocksdb/v5 v5.0.1
 	github.com/syndtr/goleveldb v1.0.0
-	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
+	github.com/valyala/fasthttp v1.6.0
+	golang.org/x/sys v0.0.0-20210902050250-f475640dd07b
 	google.golang.org/protobuf v1.23.0
+	modernc.org/sqlite v1.13.0
 )
